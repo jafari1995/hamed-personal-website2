@@ -1,0 +1,44 @@
+---
+import { categoryHref, postHref, type CategoryBucket, type Post } from "../lib/posts";
+import { site } from "../site.config";
+import { guideCountLabel, ui } from "../lib/ui";
+
+interface Props {
+  category: CategoryBucket;
+  latest?: Post | null;
+}
+
+const { category, latest = null } = Astro.props;
+const t = ui(site.language);
+const subs = category.subcategories.filter((sub) => sub.count > 0).slice(0, 4);
+const description = (category.description || "").trim();
+const image = (latest?.data.image || site.defaultCover || "").trim();
+---
+<article class:list={["topic-panel", image && "has-cover"]}>
+  {image && (
+    <div class="topic-cover" aria-hidden="true">
+      <img src={image} alt="" width="160" height="160" loading="lazy" />
+    </div>
+  )}
+  <div class="topic-panel-copy">
+    <h3>
+      <a href={categoryHref(category.id)}>{category.label}</a>
+    </h3>
+    {description && <p>{description}</p>}
+    {subs.length > 0 && (
+      <ul class="topic-subs">
+        {subs.map((sub) => (
+          <li>
+            <a href={categoryHref(category.id, sub.id)}>{sub.label}</a>
+          </li>
+        ))}
+      </ul>
+    )}
+    <p class="topic-meta">
+      <span>{guideCountLabel(site.language, category.count)}</span>
+      {latest && (
+        <a class="topic-latest" href={postHref(latest)}>{latest.data.title}</a>
+      )}
+    </p>
+  </div>
+</article>

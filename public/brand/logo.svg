@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96" role="img" aria-label="Site logo">
+  <defs>
+    <linearGradient id="sky" x1="18" y1="12" x2="78" y2="84" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#1a8eab"/>
+      <stop offset="1" stop-color="#0d5f72"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="48" y1="22" x2="48" y2="58" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#ffe08a"/>
+      <stop offset="1" stop-color="#f0b429"/>
+    </linearGradient>
+  </defs>
+  <rect width="96" height="96" rx="22" fill="url(#sky)"/>
+  <path d="M8 62c12-10 28-16 40-16s28 6 40 16v26H8V62Z" fill="#0a4b5a" opacity=".35"/>
+  <path d="M38 90c2.5-18 4-32 10-44 6 12 7.5 26 10 44H38Z" fill="#f4fbff" opacity=".92"/>
+  <path d="M47.2 90c1.2-16 2-28 4.8-40 2.8 12 3.6 24 4.8 40h-9.6Z" fill="#0e7c8f" opacity=".45"/>
+  <circle cx="48" cy="34" r="11" fill="url(#glow)"/>
+  <circle cx="48" cy="34" r="16" fill="#ffe08a" opacity=".22"/>
+</svg>

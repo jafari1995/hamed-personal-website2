@@ -1,0 +1,18 @@
+/* Theme: ocean-minimal — applied as src/styles/theme.css */
+:root {
+  --color-bg: #f3f7fa;
+  --color-surface: #ffffff;
+  --color-text: #0c2238;
+  --color-muted: #5b7188;
+  --color-accent: #0e7c8f;
+  --color-accent-hover: #0a6170;
+  --color-on-accent: #fff;
+  --color-border: #d3e0ea;
+  --color-link: #0e7c8f;
+  --font-display: Georgia, "Times New Roman", "Noto Naskh Arabic", serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", "Noto Sans", "Noto Sans Arabic", sans-serif;
+  --radius: 14px;
+  --max-width: 48rem;
+  --space: 1.25rem;
+  --shadow-soft: 0 18px 50px color-mix(in srgb, #0c2238 8%, transparent);
+}

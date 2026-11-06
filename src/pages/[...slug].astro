@@ -1,0 +1,208 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import MarketingBanner from "../components/MarketingBanner.astro";
+import RelatedPages from "../components/RelatedPages.astro";
+import { site } from "../site.config";
+import {
+  categoryHref,
+  postCategory,
+  postSubcategory,
+  categoryLabel,
+  subcategoryLabel,
+  formatDate,
+  readingMinutes,
+  postHref,
+} from "../lib/posts";
+import { articleJsonLd } from "../lib/seo";
+import { inferDirection } from "../lib/locale";
+import { formatCount, ui } from "../lib/ui";
+import { coverTone } from "../lib/cover";
+import { renderArticleHtml, splitAfterParagraph } from "../lib/articleBody";
+import { bannersFor } from "../lib/marketing";
+
+export async function getStaticPaths() {
+  const posts = await getCollection("articles");
+  return posts.map((post) => ({
+    params: { slug: post.slug },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await post.render();
+const category = postCategory(post);
+const subcategory = postSubcategory(post);
+const showMiddle = bannersFor("article_middle", category, subcategory).length > 0;
+const articleSplit = showMiddle
+  ? splitAfterParagraph(await renderArticleHtml(Content), 3)
+  : null;
+const catLabel = category ? categoryLabel(category) : "";
+const subLabel = category && subcategory ? subcategoryLabel(category, subcategory) : "";
+const mins = readingMinutes(post);
+const pageLang = post.data.language || site.language;
+const pageDir = inferDirection(pageLang);
+const t = ui(pageLang);
+const hero = (post.data.image || site.defaultCover || "").trim();
+const tone = coverTone(post.data.title || post.slug);
+const path = postHref(post);
+const crumbs = [{ name: site.name, path: "/" }];
+if (category) crumbs.push({ name: catLabel, path: categoryHref(category) });
+if (subcategory) crumbs.push({ name: subLabel, path: categoryHref(category, subcategory) });
+crumbs.push({ name: post.data.title, path });
+---
+<BaseLayout
+  title={post.data.seo_title || post.data.title}
+  description={post.data.description || site.tagline}
+  language={pageLang}
+  direction={pageDir}
+  activeCategory={category}
+  activeSubcategory={subcategory}
+  ogType="article"
+  image={hero}
+  canonicalPath={path}
+  jsonLd={articleJsonLd({
+    title: post.data.title,
+    description: post.data.description || site.tagline,
+    path,
+    date: post.data.date,
+    language: pageLang,
+    image: hero,
+    crumbs,
+  })}
+>
+  <div class="read-progress" hidden aria-hidden="true"><span></span></div>
+  <a class="to-top" href="#main" hidden>{t.backToTop}</a>
+
+  <div class="prose-shell">
+    {(category || subcategory) && (
+      <nav class="crumbs" aria-label={t.breadcrumb}>
+        <a href="/"><bdi>{site.name}</bdi></a>
+        {category && (
+          <>
+            <span aria-hidden="true">/</span>
+            <a href={categoryHref(category)}>{catLabel}</a>
+          </>
+        )}
+        {subcategory && (
+          <>
+            <span aria-hidden="true">/</span>
+            <a href={categoryHref(category, subcategory)}>{subLabel}</a>
+          </>
+        )}
+      </nav>
+    )}
+
+    <article class="article" dir={pageDir} lang={pageLang || undefined}>
+      <header class="article-header">
+        <div class="story-kicker">
+          {category && (
+            <a class="eyebrow" href={categoryHref(category)}>{catLabel}</a>
+          )}
+          {subcategory && (
+            <>
+              <span class="dot" aria-hidden="true">·</span>
+              <a class="eyebrow quiet" href={categoryHref(category, subcategory)}>
+                {subLabel}
+              </a>
+            </>
+          )}
+        </div>
+        <h1>{post.data.title}</h1>
+        {post.data.description && <p class="lede">{post.data.description}</p>}
+        <div class="story-meta">
+          {post.data.date && (
+            <time datetime={String(post.data.date)}>
+              {formatDate(post.data.date, pageLang)}
+            </time>
+          )}
+          {post.data.date && <span aria-hidden="true">·</span>}
+          <span>{formatCount(pageLang, mins)} {t.minRead}</span>
+        </div>
+        {hero ? (
+          <figure class="article-hero">
+            <img
+              src={hero}
+              alt={post.data.image_alt || ""}
+              width="1200"
+              height="675"
+            />
+          </figure>
+        ) : (
+          <div class:list={["article-mast", `cover-tone-${tone}`]} aria-hidden="true"></div>
+        )}
+      </header>
+      <div class="article-body">
+        {articleSplit ? <Fragment set:html={articleSplit.before} /> : <Content />}
+        {articleSplit && (
+          <MarketingBanner
+            area="article_middle"
+            language={pageLang}
+            activeCategory={category}
+            activeSubcategory={subcategory}
+          />
+        )}
+        {articleSplit && <Fragment set:html={articleSplit.after} />}
+      </div>
+      {showMiddle && !articleSplit && (
+        <MarketingBanner
+          area="article_middle"
+          language={pageLang}
+          activeCategory={category}
+          activeSubcategory={subcategory}
+        />
+      )}
+      {(category || subcategory) && (
+        <footer class="article-end">
+          <p>{t.continueIn}</p>
+          <a href={subcategory ? categoryHref(category, subcategory) : categoryHref(category)}>
+            {subcategory ? subLabel : catLabel}
+          </a>
+        </footer>
+      )}
+    </article>
+    <script>
+      function updateReadingChrome() {
+        const bar = document.querySelector(".read-progress");
+        const fill = bar?.querySelector("span");
+        const article = document.querySelector(".article-body");
+        const top = document.querySelector(".to-top");
+        if (!(bar instanceof HTMLElement) || !(fill instanceof HTMLElement) || !(article instanceof HTMLElement)) {
+          return;
+        }
+        const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        if (reduceMotion) {
+          bar.hidden = true;
+        } else {
+          bar.hidden = false;
+          const start = article.getBoundingClientRect().top + window.scrollY;
+          const traveled = window.scrollY + window.innerHeight * 0.2 - start;
+          const total = Math.max(article.offsetHeight - window.innerHeight * 0.35, 1);
+          const progress = Math.min(1, Math.max(0, traveled / total));
+          fill.style.transform = `scaleX(${progress})`;
+        }
+        const footer = document.querySelector(".site-footer");
+        const footerNear = footer instanceof HTMLElement && footer.getBoundingClientRect().top < window.innerHeight - 72;
+        if (top instanceof HTMLElement) top.hidden = window.scrollY < 560 || footerNear;
+      }
+      const root = document.documentElement;
+      if (root.dataset.readChrome !== "1") {
+        root.dataset.readChrome = "1";
+        updateReadingChrome();
+        window.addEventListener("scroll", updateReadingChrome, { passive: true });
+        document.addEventListener("astro:page-load", updateReadingChrome);
+      } else {
+        updateReadingChrome();
+      }
+    </script>
+
+    <MarketingBanner
+      area="article_bottom"
+      language={pageLang}
+      activeCategory={category}
+      activeSubcategory={subcategory}
+    />
+
+    <RelatedPages post={post} limit={4} />
+  </div>
+</BaseLayout>

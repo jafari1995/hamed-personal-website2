@@ -1,0 +1,65 @@
+---
+import PostCard from "./PostCard.astro";
+import {
+  relatedPosts,
+  postCategory,
+  postSubcategory,
+  categoryHref,
+  categoryLabel,
+  subcategoryLabel,
+  getCategories,
+  type Post,
+} from "../lib/posts";
+import { site } from "../site.config";
+import { ui } from "../lib/ui";
+
+interface Props {
+  post: Post;
+  limit?: number;
+}
+
+const { post, limit = 4 } = Astro.props;
+const related = await relatedPosts(post, limit);
+const category = postCategory(post);
+const subcategory = postSubcategory(post);
+const categories = await getCategories();
+const catBucket = categories.find((c) => c.id === category);
+const siblingSubs = (catBucket?.subcategories || []).filter((s) => s.id !== subcategory);
+const pageLang = post.data.language || site.language;
+const t = ui(pageLang);
+const catLabel = category ? categoryLabel(category) : "";
+const subLabel = category && subcategory ? subcategoryLabel(category, subcategory) : "";
+---
+{(related.length > 0 || category || siblingSubs.length > 0) && (
+  <section class="section related-pages" aria-label={t.related}>
+    <div class="section-head">
+      <h2>{t.related}</h2>
+    </div>
+
+    {(category || siblingSubs.length > 0) && (
+      <div class="related-links">
+        {category && (
+          <a class="related-pill" href={categoryHref(category)}>
+            {catLabel}
+          </a>
+        )}
+        {subcategory && category && (
+          <a class="related-pill" href={categoryHref(category, subcategory)}>
+            {subLabel}
+          </a>
+        )}
+        {siblingSubs.slice(0, 6).map((sub) => (
+          <a class="related-pill quiet" href={categoryHref(category, sub.id)}>
+            {sub.label}
+          </a>
+        ))}
+      </div>
+    )}
+
+    {related.length > 0 && (
+      <div class="related-grid" style="margin-top:1.15rem">
+        {related.map((p) => <PostCard post={p} />)}
+      </div>
+    )}
+  </section>
+)}

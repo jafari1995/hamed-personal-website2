@@ -1,0 +1,62 @@
+---
+import { site } from "../site.config";
+import { bannersFor } from "../lib/marketing";
+import { regionLabel, ui } from "../lib/ui";
+
+interface Props {
+  activeCategory?: string;
+  activeSubcategory?: string;
+  area?: string;
+  language?: string;
+}
+
+const {
+  activeCategory = "",
+  activeSubcategory = "",
+  area = "header",
+  language = site.language,
+} = Astro.props;
+
+const t = ui(language);
+const list = bannersFor(area, activeCategory, activeSubcategory).filter(
+  (item) => (item.text || "").trim().length > 0,
+);
+
+const region = regionLabel(language, area);
+
+const areaClass =
+  area === "article_bottom"
+    ? "article"
+    : area === "article_middle"
+      ? "inline"
+      : area === "page_middle"
+        ? "middle"
+        : area;
+---
+{/* Omit the whole region when no promo is configured for this area. */}
+{list.length > 0 && (
+  <div
+    class={`marketing-stack marketing-area-${areaClass}`}
+    role="region"
+    aria-label={region}
+  >
+    {list.map((h) => {
+      const image = (h.image_url || "").trim();
+      return (
+        <div class:list={[`marketing-banner style-${h.style || "promo"}`, image && "has-image"]}>
+          {image && (
+            <img class="marketing-image" src={image} alt="" width="640" height="360" loading="lazy" />
+          )}
+          <div class="marketing-copy">
+            <p class="marketing-text">{h.text}</p>
+            {h.link_url && (
+              <a class="marketing-link" href={h.link_url}>
+                {h.link_label || t.learnMore}
+              </a>
+            )}
+          </div>
+        </div>
+      );
+    })}
+  </div>
+)}

@@ -1,0 +1,125 @@
+---
+import BaseLayout from "../../../layouts/BaseLayout.astro";
+import PostCard from "../../../components/PostCard.astro";
+import CategorySwitcher from "../../../components/CategorySwitcher.astro";
+import MarketingBanner from "../../../components/MarketingBanner.astro";
+import { site } from "../../../site.config";
+import {
+  getCategories,
+  getPostsByCategory,
+  categoryHref,
+  labelize,
+} from "../../../lib/posts";
+import { collectionJsonLd } from "../../../lib/seo";
+import { formatCount, guideCountLabel, ui } from "../../../lib/ui";
+
+export async function getStaticPaths() {
+  const categories = await getCategories();
+  return categories.flatMap((cat) =>
+    cat.subcategories.map((sub) => ({
+      params: { category: cat.id, subcategory: sub.id },
+      props: {
+        category: cat.id,
+        subcategory: sub.id,
+        categoryLabel: cat.label,
+        subcategoryLabel: sub.label,
+        count: sub.count,
+      },
+    }))
+  );
+}
+
+const { category, subcategory, categoryLabel, subcategoryLabel, count } = Astro.props;
+const posts = await getPostsByCategory(category, subcategory);
+const lead = posts[0];
+const rest = posts.slice(1);
+const catLabel = categoryLabel || labelize(category);
+const subLabel = subcategoryLabel || labelize(subcategory);
+const t = ui(site.language);
+const categories = await getCategories();
+const bucket = categories.find((item) => item.id === category);
+const siblings = (bucket?.subcategories ?? []).filter((sub) => sub.count > 0);
+const intro = (bucket?.subcategories.find((sub) => sub.id === subcategory)?.description || "").trim();
+const path = categoryHref(category, subcategory);
+const crumbs = [
+  { name: site.name, path: "/" },
+  { name: catLabel, path: categoryHref(category) },
+  { name: subLabel, path },
+];
+---
+<BaseLayout
+  title={`${subLabel} · ${catLabel}`}
+  description={intro || `${subLabel} — ${site.tagline}`}
+  language={site.language}
+  direction={site.direction}
+  activeCategory={category}
+  activeSubcategory={subcategory}
+  canonicalPath={path}
+  jsonLd={collectionJsonLd({
+    name: subLabel,
+    description: intro || `${subLabel} — ${site.tagline}`,
+    path,
+    crumbs,
+  })}
+>
+  <nav class="crumbs" aria-label={t.breadcrumb}>
+    <a href="/">{site.name}</a>
+    <span aria-hidden="true">/</span>
+    <a href={categoryHref(category)}>{catLabel}</a>
+    <span aria-hidden="true">/</span>
+    <span>{subLabel}</span>
+  </nav>
+
+  <section class="page-hero">
+    <p class="section-label">{catLabel}</p>
+    <h1>{subLabel}</h1>
+    {intro && <p class="lede">{intro}</p>}
+    <p class="count-line">{guideCountLabel(site.language, count)}</p>
+  </section>
+
+  <CategorySwitcher categories={categories} current={category} exact={false} />
+
+  <MarketingBanner
+    area="page_middle"
+    activeCategory={category}
+    activeSubcategory={subcategory}
+  />
+
+  {siblings.length > 0 && (
+    <section class="section">
+      <h2 class="section-label">{t.inThisTopic}</h2>
+      <ul class="chip-row">
+        {siblings.map((sub) => (
+          <li>
+            <a
+              class:list={["chip", sub.id === subcategory && "is-active"]}
+              href={categoryHref(category, sub.id)}
+              aria-current={sub.id === subcategory ? "page" : undefined}
+            >
+              {sub.label}
+              <span class="muted">· {formatCount(site.language, sub.count)}</span>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </section>
+  )}
+
+  <section class="section">
+    {posts.length === 0 ? (
+      <div class="empty">
+        <p>{t.noArticlesHere}</p>
+        <a class="btn-ghost" href={categoryHref(category)}>{catLabel}</a>
+      </div>
+    ) : (
+      <>
+        {lead && <PostCard post={lead} featured />}
+        {rest.length > 0 && (
+          <div class="story-grid story-follow">
+            {rest.map((post) => <PostCard post={post} />)}
+          </div>
+        )}
+      </>
+    )}
+  </section>
+</BaseLayout>

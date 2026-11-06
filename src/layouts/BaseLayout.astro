@@ -1,0 +1,335 @@
+---
+import { ViewTransitions } from "astro:transitions";
+import "../styles/global.css";
+import "../styles/theme.css";
+import { site } from "../site.config";
+import { getCategories, categoryHref } from "../lib/posts";
+import { htmlLang, resolveDirection } from "../lib/locale";
+import { absoluteUrl, mediaUrl, ogLocale, siteOrigin } from "../lib/seo";
+import { ui } from "../lib/ui";
+import MarketingBanner from "../components/MarketingBanner.astro";
+import CustomScripts from "../components/CustomScripts.astro";
+
+interface Props {
+  title: string;
+  description?: string;
+  language?: string;
+  direction?: string;
+  activeCategory?: string;
+  activeSubcategory?: string;
+  ogType?: string;
+  image?: string;
+  canonicalPath?: string;
+  jsonLd?: unknown;
+}
+
+const {
+  title,
+  description = site.tagline,
+  language = site.language || "en",
+  direction = site.direction || "auto",
+  activeCategory = "",
+  activeSubcategory = "",
+  ogType = "website",
+  image = "",
+  canonicalPath = Astro.url.pathname,
+  jsonLd,
+} = Astro.props;
+
+const dir = resolveDirection(direction, language);
+const lang = htmlLang(language);
+const t = ui(language);
+const categories = await getCategories();
+const pageTitle = title.includes(site.name) ? title : `${title} · ${site.name}`;
+const canonical = absoluteUrl(canonicalPath);
+const shareImage = mediaUrl(image);
+const origin = siteOrigin();
+const locale = ogLocale(language);
+const fonts = site.fonts || {
+  bodyFamily: "system-ui, sans-serif",
+  displayFamily: "Georgia, serif",
+  stylesheets: [] as string[],
+};
+const fontStylesheets = fonts.stylesheets || [];
+const needsGoogle = fontStylesheets.some((href) => href.includes("fonts.googleapis"));
+const logo = (site.logo || "").trim();
+const favicon = (site.favicon || logo || "").trim();
+---
+<!doctype html>
+<html
+  lang={lang}
+  dir={dir}
+  style={`--font-body: ${fonts.bodyFamily}; --font-display: ${fonts.displayFamily};`}
+>
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    {favicon && <link rel="icon" href={favicon} />}
+    {favicon && <link rel="apple-touch-icon" href={favicon} />}
+    {description && <meta name="description" content={description} />}
+    <link rel="canonical" href={canonical} />
+    <meta property="og:title" content={pageTitle} />
+    {description && <meta property="og:description" content={description} />}
+    <meta property="og:type" content={ogType} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={locale} />
+    {origin && <meta property="og:site_name" content={site.name} />}
+    {shareImage && <meta property="og:image" content={shareImage} />}
+    <meta name="twitter:card" content={shareImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={pageTitle} />
+    {description && <meta name="twitter:description" content={description} />}
+    {shareImage && <meta name="twitter:image" content={shareImage} />}
+    <meta name="theme-color" content="var(--color-bg)" />
+    {needsGoogle && (
+      <>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+      </>
+    )}
+    {fontStylesheets.map((href) => (
+      <link rel="stylesheet" href={href} />
+    ))}
+    {jsonLd && (
+      <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+    )}
+    <ViewTransitions fallback="swap" />
+    <CustomScripts position="head" />
+  </head>
+  <body class={`dir-${dir}`} data-lang={lang}>
+    <a class="skip-link" href="#main">{t.skip}</a>
+
+    <MarketingBanner
+      area="header"
+      language={language}
+      activeCategory={activeCategory}
+      activeSubcategory={activeSubcategory}
+    />
+
+    <header class="site-header" transition:persist="site-header">
+      <div class="header-inner">
+        <div class="header-bar">
+          <a class="brand-link" href="/" aria-label={site.name}>
+            {logo ? (
+              <img class="brand-logo" src={logo} alt="" width="96" height="96" />
+            ) : null}
+            <span class="brand-text">
+              <span class="brand-name">{site.name}</span>
+              {site.tagline && (
+                <span class="brand-tag">{site.tagline}</span>
+              )}
+            </span>
+          </a>
+
+          <details class="nav-menu">
+            <summary class="nav-menu-toggle">
+              <span class="nav-burger" aria-hidden="true">
+                <span></span><span></span><span></span>
+              </span>
+              <span class="nav-menu-label">{t.menu}</span>
+            </summary>
+            <nav class="site-nav" aria-label={t.topics} data-nav-root>
+              <a
+                class:list={["nav-item", !activeCategory && "is-active"]}
+                href="/"
+                data-nav="home"
+                aria-current={!activeCategory ? "page" : undefined}
+              >
+                {t.home}
+              </a>
+              {categories.map((cat) => (
+                <a
+                  class:list={["nav-item", activeCategory === cat.id && "is-active"]}
+                  href={categoryHref(cat.id)}
+                  data-nav-category={cat.id}
+                  aria-current={activeCategory === cat.id ? "page" : undefined}
+                >
+                  {cat.label}
+                </a>
+              ))}
+            </nav>
+          </details>
+        </div>
+
+        {/* All subcategory groups stay in the persisted header; JS reveals the active category. */}
+        <nav
+          class="site-subnav"
+          data-subnav-root
+          aria-label={t.subtopics}
+          hidden={!activeCategory}
+        >
+          {categories.map((cat) => {
+            const subs = cat.subcategories.filter((sub) => sub.count > 0);
+            if (subs.length === 0) return null;
+            const open = activeCategory === cat.id;
+            return (
+              <div
+                class="subnav-group"
+                data-subnav-for={cat.id}
+                hidden={!open}
+              >
+                {subs.map((sub) => (
+                  <a
+                    class:list={[
+                      "nav-item",
+                      "nav-subitem",
+                      activeCategory === cat.id &&
+                        activeSubcategory === sub.id &&
+                        "is-active",
+                    ]}
+                    href={categoryHref(cat.id, sub.id)}
+                    data-nav-category={cat.id}
+                    data-nav-subcategory={sub.id}
+                    aria-current={
+                      activeCategory === cat.id && activeSubcategory === sub.id
+                        ? "page"
+                        : undefined
+                    }
+                  >
+                    {sub.label}
+                  </a>
+                ))}
+              </div>
+            );
+          })}
+        </nav>
+      </div>
+    </header>
+    <script is:inline>
+      (() => {
+        // Header uses transition:persist, so server-rendered is-active would stick.
+        // Re-apply from #main data attrs after every soft navigation.
+        const syncActiveNav = () => {
+          const main = document.getElementById("main");
+          const active = (main?.dataset.activeCategory || "").trim();
+          const activeSub = (main?.dataset.activeSubcategory || "").trim();
+
+          document.querySelectorAll("[data-nav-root] .nav-item").forEach((link) => {
+            const isHome = link.getAttribute("data-nav") === "home";
+            const cat = (link.getAttribute("data-nav-category") || "").trim();
+            const on = active ? cat === active : isHome;
+            link.classList.toggle("is-active", on);
+            if (on) link.setAttribute("aria-current", "page");
+            else link.removeAttribute("aria-current");
+          });
+
+          const subRoot = document.querySelector("[data-subnav-root]");
+          if (!(subRoot instanceof HTMLElement)) return;
+          let visible = false;
+          subRoot.querySelectorAll(".subnav-group").forEach((group) => {
+            if (!(group instanceof HTMLElement)) return;
+            const show = Boolean(active) && group.dataset.subnavFor === active;
+            group.hidden = !show;
+            if (show) visible = true;
+            group.querySelectorAll(".nav-item").forEach((link) => {
+              const sub = (link.getAttribute("data-nav-subcategory") || "").trim();
+              const on = show && Boolean(activeSub) && sub === activeSub;
+              link.classList.toggle("is-active", on);
+              if (on) link.setAttribute("aria-current", "page");
+              else link.removeAttribute("aria-current");
+            });
+          });
+          subRoot.hidden = !visible;
+        };
+        const bindNav = () => {
+          const menu = document.querySelector(".nav-menu");
+          if (!menu || menu.dataset.bound === "1") return;
+          menu.dataset.bound = "1";
+          const mq = window.matchMedia("(max-width: 767px)");
+          const sync = () => {
+            // Desktop: keep open so CSS can treat nav as always-visible.
+            if (mq.matches) menu.removeAttribute("open");
+            else menu.setAttribute("open", "");
+          };
+          sync();
+          mq.addEventListener("change", sync);
+          menu.querySelectorAll("a").forEach((link) => {
+            link.addEventListener("click", () => {
+              if (mq.matches) menu.removeAttribute("open");
+            });
+          });
+          document.addEventListener("click", (event) => {
+            if (!mq.matches || !menu.hasAttribute("open")) return;
+            if (menu.contains(event.target)) return;
+            menu.removeAttribute("open");
+          });
+          document.addEventListener("keydown", (event) => {
+            if (event.key === "Escape" && menu.hasAttribute("open")) {
+              menu.removeAttribute("open");
+            }
+          });
+        };
+        syncActiveNav();
+        bindNav();
+        document.addEventListener("astro:page-load", () => {
+          const menu = document.querySelector(".nav-menu");
+          if (menu) delete menu.dataset.bound;
+          syncActiveNav();
+          bindNav();
+        });
+      })();
+    </script>
+
+    <main
+      id="main"
+      class="site-main"
+      data-active-category={activeCategory || ""}
+      data-active-subcategory={activeSubcategory || ""}
+      transition:animate="fade"
+    >
+      <slot />
+    </main>
+
+    <footer class="site-footer" transition:persist="site-footer">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <a class="brand-link footer-brand-link" href="/" aria-label={site.name}>
+            {logo ? (
+              <img class="brand-logo" src={logo} alt="" width="96" height="96" />
+            ) : null}
+            <span class="brand-name">{site.name}</span>
+          </a>
+          <p>{site.about}</p>
+          {site.socialNote && <p class="footer-note">{site.socialNote}</p>}
+        </div>
+        <div class="footer-cols">
+          <div>
+            <h2 class="footer-label">{t.topics}</h2>
+            <ul>
+              {categories.map((cat) => (
+                <li>
+                  <a href={categoryHref(cat.id)}>{cat.label}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <div>
+            <h2 class="footer-label">{t.startHere}</h2>
+            <ul>
+              {categories[0] && (
+                <li>
+                  <a href={categoryHref(categories[0].id)}>
+                    {categories[0].label}
+                  </a>
+                </li>
+              )}
+              <li><a href="/">{t.latestArticles}</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <p class="footer-legal">
+        © {new Date().getFullYear()} <bdi>{site.name}</bdi>.{" "}
+        {(site.footerLegal || "").trim() || t.educational}
+      </p>
+    </footer>
+
+    <MarketingBanner
+      area="footer"
+      language={language}
+      activeCategory={activeCategory}
+      activeSubcategory={activeSubcategory}
+    />
+    <CustomScripts position="body" />
+  </body>
+</html>

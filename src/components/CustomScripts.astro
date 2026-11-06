@@ -1,0 +1,14 @@
+---
+import scripts from "../data/custom-scripts.json";
+
+interface Props {
+  position?: "head" | "body";
+}
+
+const { position = "head" } = Astro.props;
+const enabled = (scripts as { enabled?: boolean })?.enabled !== false;
+const head = String((scripts as { head?: string })?.head || "").trim();
+const bodyEnd = String((scripts as { body_end?: string })?.body_end || "").trim();
+const html = position === "body" ? bodyEnd : head;
+---
+{enabled && html && <Fragment set:html={html} />}

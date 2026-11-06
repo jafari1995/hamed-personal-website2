@@ -1,0 +1,81 @@
+---
+import {
+  postHref,
+  postCategory,
+  postSubcategory,
+  categoryHref,
+  categoryLabel,
+  subcategoryLabel,
+  formatDate,
+  readingMinutes,
+  type Post,
+} from "../lib/posts";
+import { inferDirection } from "../lib/locale";
+import { coverTone } from "../lib/cover";
+import { site } from "../site.config";
+import { formatCount, ui } from "../lib/ui";
+
+interface Props {
+  post: Post;
+  featured?: boolean;
+}
+
+const { post, featured = false } = Astro.props;
+const cat = postCategory(post);
+const sub = postSubcategory(post);
+const catLabel = cat ? categoryLabel(cat) : "";
+const subLabel = cat && sub ? subcategoryLabel(cat, sub) : "";
+const mins = readingMinutes(post);
+const pageLang = post.data.language || site.language;
+const contentDir = inferDirection(pageLang);
+const t = ui(pageLang);
+const TitleTag = featured ? "h2" : "h3";
+const image = (post.data.image || site.defaultCover || "").trim();
+const tone = coverTone(post.data.title || post.slug);
+---
+<article
+  class:list={["story", featured && "story-featured", image && "has-image"]}
+  dir={contentDir}
+  lang={pageLang || undefined}
+>
+  <div class="story-media">
+    {image ? (
+      <img
+        src={image}
+        alt=""
+        width={featured ? 1200 : 480}
+        height={featured ? 675 : 480}
+        loading="lazy"
+      />
+    ) : (
+      <span class:list={["story-cover", `cover-tone-${tone}`]} aria-hidden="true"></span>
+    )}
+  </div>
+  <div class="story-copy">
+    <div class="story-kicker">
+      {cat && (
+        <a class="eyebrow" href={categoryHref(cat)}>{catLabel}</a>
+      )}
+      {sub && (
+        <>
+          <span class="dot" aria-hidden="true">·</span>
+          <a class="eyebrow quiet" href={categoryHref(cat, sub)}>{subLabel}</a>
+        </>
+      )}
+    </div>
+    <TitleTag class="story-title">
+      <a href={postHref(post)}>{post.data.title}</a>
+    </TitleTag>
+    {post.data.description && <p class="story-excerpt">{post.data.description}</p>}
+    <div class="story-meta">
+      {post.data.date && (
+        <time datetime={String(post.data.date)}>{formatDate(post.data.date, pageLang)}</time>
+      )}
+      {post.data.date && <span aria-hidden="true">·</span>}
+      <span>{formatCount(pageLang, mins)} {t.minRead}</span>
+    </div>
+    {featured && (
+      <a class="story-cta" href={postHref(post)}>{t.readGuide}</a>
+    )}
+  </div>
+</article>

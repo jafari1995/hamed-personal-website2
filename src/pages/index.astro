@@ -1,0 +1,93 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import PostCard from "../components/PostCard.astro";
+import TopicPanel from "../components/TopicPanel.astro";
+import MarketingBanner from "../components/MarketingBanner.astro";
+import { site } from "../site.config";
+import {
+  getPosts,
+  getCategories,
+  categoryHref,
+  postCategory,
+} from "../lib/posts";
+import { websiteJsonLd } from "../lib/seo";
+import { ui } from "../lib/ui";
+
+const posts = await getPosts();
+const categories = (await getCategories()).filter((cat) => cat.count > 0);
+const latestByCategory = new Map<string, (typeof posts)[number]>();
+for (const post of posts) {
+  const cat = postCategory(post);
+  if (cat && !latestByCategory.has(cat)) latestByCategory.set(cat, post);
+}
+const featured = posts[0];
+const rest = posts.slice(1, 9);
+const primaryCat = categories[0];
+const t = ui(site.language);
+---
+<BaseLayout
+  title={site.name}
+  description={site.tagline}
+  language={site.language}
+  direction={site.direction}
+  canonicalPath="/"
+  jsonLd={websiteJsonLd()}
+>
+  <section class="home-hero">
+    <div class="home-hero-copy">
+      <p class="section-label">{t.browseTopics}</p>
+      <h1>{site.name}</h1>
+      <p class="lede">{site.tagline}</p>
+      <div class="hero-actions">
+        {featured && (
+          <a class="btn-primary" href={`/${featured.slug}/`}>{t.latestGuide}</a>
+        )}
+        {primaryCat && (
+          <a class="btn-ghost" href={categoryHref(primaryCat.id)}>
+            {t.browse} {primaryCat.label}
+          </a>
+        )}
+      </div>
+    </div>
+    {featured ? (
+      <PostCard post={featured} featured />
+    ) : (
+      <div class="empty"><p>{t.guidesAppear}</p></div>
+    )}
+  </section>
+
+  <MarketingBanner area="page_middle" />
+
+  {categories.length > 0 && (
+    <section class="section" aria-label={t.browseTopics}>
+      <div class="section-head">
+        <h2>{t.browseTopics}</h2>
+      </div>
+      <div class="topic-index">
+        {categories.map((cat) => (
+          <TopicPanel category={cat} latest={latestByCategory.get(cat.id)} />
+        ))}
+      </div>
+    </section>
+  )}
+
+  {posts.length > 0 && (
+    <section class="section" aria-label={t.moreGuides}>
+      <div class="section-head">
+        <h2>{t.moreGuides}</h2>
+      </div>
+      {rest.length === 0 && posts.length <= 1 ? (
+        <p class="muted">{t.moreComing}</p>
+      ) : (
+        <div class="story-grid cols-2">
+          {rest.map((post) => <PostCard post={post} />)}
+        </div>
+      )}
+    </section>
+  )}
+
+  <aside class="trust-strip">
+    <h2>{t.whySite}</h2>
+    <p>{site.about}</p>
+  </aside>
+</BaseLayout>

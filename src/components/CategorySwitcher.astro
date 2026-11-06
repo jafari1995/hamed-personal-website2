@@ -1,0 +1,35 @@
+---
+import { categoryHref, type CategoryBucket } from "../lib/posts";
+import { site } from "../site.config";
+import { ui } from "../lib/ui";
+
+interface Props {
+  categories: CategoryBucket[];
+  current: string;
+  /** True on the category landing itself. Subcategory pages mark the parent as the current section. */
+  exact?: boolean;
+}
+
+const { categories, current, exact = true } = Astro.props;
+const t = ui(site.language);
+---
+{categories.length > 1 && (
+  <nav class="cat-switch" aria-label={t.topics}>
+    <ul>
+      {categories.map((cat) => {
+        const active = cat.id === current;
+        return (
+          <li>
+            <a
+              class:list={[active && "is-active"]}
+              href={categoryHref(cat.id)}
+              aria-current={active ? (exact ? "page" : "true") : undefined}
+            >
+              {cat.label}
+            </a>
+          </li>
+        );
+      })}
+    </ul>
+  </nav>
+)}
