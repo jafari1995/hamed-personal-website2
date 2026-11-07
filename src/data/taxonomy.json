@@ -1,53 +1,100 @@
 {
   "categories": [
     {
-      "id": "guides",
-      "name": "Guides",
-      "description": "Foundational explainers and overviews",
+      "id": "frontend-development",
+      "name": "توسعه فرانت‌اند",
+      "description": "مقالات و تجربیات مرتبط با توسعه رابط کاربری و مهندسی فرانت‌اند",
       "subcategories": [
         {
-          "id": "getting-started",
-          "name": "Getting Started",
-          "description": "First steps"
+          "id": "react",
+          "name": "ری‌اکت",
+          "description": "مفاهیم، الگوها و تجربیات توسعه با React"
         },
         {
-          "id": "fundamentals",
-          "name": "Fundamentals",
-          "description": "Core ideas"
+          "id": "nextjs",
+          "name": "نکست جی‌اس",
+          "description": "توسعه اپلیکیشن‌های وب با Next.js"
+        },
+        {
+          "id": "javascript-typescript",
+          "name": "جاوااسکریپت و تایپ‌اسکریپت",
+          "description": "مفاهیم زبان، قابلیت‌ها و تکنیک‌های پیشرفته"
+        },
+        {
+          "id": "css-ui",
+          "name": "استایل و رابط کاربری",
+          "description": "CSS، طراحی رابط کاربری و تجربه کاربری"
         }
       ]
     },
     {
-      "id": "how-to",
-      "name": "How-to",
-      "description": "Practical step-by-step articles",
+      "id": "software-engineering",
+      "name": "مهندسی نرم‌افزار",
+      "description": "معماری، کیفیت کد و اصول توسعه نرم‌افزار",
       "subcategories": [
         {
-          "id": "step-by-step",
-          "name": "Step by step",
-          "description": "Procedures"
+          "id": "architecture",
+          "name": "معماری نرم‌افزار",
+          "description": "معماری اپلیکیشن‌ها و تصمیم‌های فنی"
         },
         {
-          "id": "checklists",
-          "name": "Checklists",
-          "description": "Quick reference lists"
+          "id": "clean-code",
+          "name": "کدنویسی تمیز",
+          "description": "اصول نگهداری‌پذیری، خوانایی و کیفیت کد"
+        },
+        {
+          "id": "performance",
+          "name": "بهینه‌سازی عملکرد",
+          "description": "بهبود سرعت و کارایی اپلیکیشن‌ها"
+        },
+        {
+          "id": "testing",
+          "name": "تست و عیب‌یابی",
+          "description": "تست نرم‌افزار، دیباگ و رفع مشکلات"
         }
       ]
     },
     {
-      "id": "insights",
-      "name": "Insights",
-      "description": "Deeper takes, comparisons, and roundups",
+      "id": "projects-experiences",
+      "name": "پروژه‌ها و تجربیات",
+      "description": "تجربیات واقعی از ساخت محصولات و کار در تیم‌های نرم‌افزاری",
       "subcategories": [
         {
-          "id": "explainers",
-          "name": "Explainers",
-          "description": "Clear breakdowns"
+          "id": "personal-projects",
+          "name": "پروژه‌های شخصی",
+          "description": "معرفی پروژه‌ها و تجربه ساخت محصولات مستقل"
         },
         {
-          "id": "roundups",
-          "name": "Roundups",
-          "description": "Curated lists"
+          "id": "work-experience",
+          "name": "تجربیات کاری",
+          "description": "آموخته‌ها و چالش‌های پروژه‌های حرفه‌ای"
+        },
+        {
+          "id": "technical-decisions",
+          "name": "تصمیم‌های فنی",
+          "description": "بررسی انتخاب ابزارها، کتابخانه‌ها و راهکارهای فنی"
+        }
+      ]
+    },
+    {
+      "id": "learning-notes",
+      "name": "یادداشت‌های یادگیری",
+      "description": "یادداشت‌ها، آموخته‌ها و مطالبی که در مسیر یادگیری ثبت می‌کنم",
+      "subcategories": [
+        {
+          "id": "algorithms",
+          "name": "الگوریتم و ساختمان داده",
+          "description": "حل مسئله، الگوریتم‌ها و ساختمان داده"
+        },
+        {
+          "id": "backend-ai",
+          "name": "بک‌اند و هوش مصنوعی",
+          "description": "تجربیات مرتبط با Python، بک‌اند و ابزارهای هوش مصنوعی"
+        },
+        {
+          "id": "tools-workflow",
+          "name": "ابزارها و جریان کاری",
+          "description": "ابزارهای توسعه، بهره‌وری و اتوماسیون"
         }
       ]
     }
